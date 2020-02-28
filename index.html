@@ -30,10 +30,10 @@
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
       <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
         <div class="mdl-tabs__tab-bar">
-          <a class="mdl-tabs__tab site-title" href="#starks-panel" :class="{'is-active': show_models }" @click="show_models=true" >
+          <a class="mdl-tabs__tab site-title" href="#" :class="{'is-active': show_models }" @click="show_models=true" >
             <span style="margin-top: 10px; display: inline-block;">BioImage Model Zoo</span>
           </a>
-          <a v-for="w in windows" class="mdl-tabs__tab" :class="{'is-active': !show_models && selected_window === w}" :key="w.id" @click="selectWindow(w)">
+          <a v-for="w in windows" :href="'#'+w.name" class="mdl-tabs__tab" :class="{'is-active': !show_models && selected_window === w}" :key="w.id" @click="selectWindow(w)">
             <!-- <img class="mdl-chip__contact" src="/templates/dashboard/images/user.jpg"></img> -->
             {{w.name}}
             <i class="material-icons" @click="removeWindow(w)" style="vertical-align: top;">cancel</i>
