@@ -499,3 +499,24 @@ footer {
 .material-icons {
     vertical-align: middle;
 }
+
+.mdl-tabs__tab-bar  {
+    height: 60px;
+    justify-content: flex-start;
+}
+.site-title{
+    
+    margin-top: 0px!important;
+}
+.site-title.is-active:after{
+    background: white!important;
+}
+.mdl-tabs__tab {
+    text-decoration: none!important;
+    margin-top: 13px;
+    text-transform: none;
+}
+.mdl-layout__content{
+
+    width: 100%;
+}

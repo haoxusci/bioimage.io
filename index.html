@@ -28,32 +28,26 @@
     <!-- Always shows a header, even in smaller screens. -->
     
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-      
-      <header class="mdl-layout__header">
-        <div class="mdl-layout__header-row">
-          <!-- <a class="site-button mdl-button site-title" href="/">
-            BioImage Model Zoo
-          </a> -->
-          <!-- Title -->
-          <span class="site-title" style="cursor: pointer;" @click="show_models=true">BioImage Model Zoo</span>
+      <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
+        <div class="mdl-tabs__tab-bar">
+          <a class="mdl-tabs__tab site-title" href="#starks-panel" :class="{'is-active': show_models }" @click="show_models=true" >
+            <span style="margin-top: 10px; display: inline-block;">BioImage Model Zoo</span>
+          </a>
+          <a v-for="w in windows" class="mdl-tabs__tab" :class="{'is-active': !show_models && selected_window === w}" :key="w.id" @click="selectWindow(w)">
+            <!-- <img class="mdl-chip__contact" src="/templates/dashboard/images/user.jpg"></img> -->
+            {{w.name}}
+            <i class="material-icons" @click="removeWindow(w)" style="vertical-align: top;">cancel</i>
+          </a>
+
           <!-- Add spacer, to align navigation to the right -->
           <div class="mdl-layout-spacer"></div>
           <!-- Navigation. We hide it in small screens. -->
-          <span v-if="windows && windows.length>0" style="cursor: pointer;" class="mdl-chip mdl-chip--contact mdl-chip--deletable hide-small" href="#" @click="show_models=true">
-            <!-- <img class="mdl-chip__contact" src="/templates/dashboard/images/user.jpg"></img> -->
-            <span style="font-weight: 800;" class="mdl-chip__text">Models</span>
-          </span>
-          <template v-for="w in windows">
-            <span style="cursor: pointer;" class="mdl-chip mdl-chip--contact mdl-chip--deletable" :key="w.id" @click="selectWindow(w)">
-              <!-- <img class="mdl-chip__contact" src="/templates/dashboard/images/user.jpg"></img> -->
-              <span class="mdl-chip__text">{{' ' + w.name}}</span>
-              <a href="#" @click="removeWindow(w)" class="mdl-chip__action"><i class="material-icons" style="vertical-align: top;">cancel</i></a>
-            </span>
-          </template>
+
+
 
           <!-- Right aligned menu below button -->
           <button v-show="imjoy && apps" id="demo-menu-lower-right"
-          class="mdl-button mdl-js-button primary-color">
+          class="mdl-button mdl-js-button primary-color" style="margin-top: 24px!important;">
           <i class="material-icons">extension</i>
           <span class="hide-small">BioEngine Apps</span>
           </button>
@@ -78,162 +72,163 @@
             </li>
           </ul>
         </div>
-      </header>
-      <div ref="progressbar" class="mdl-progress mdl-js-progress"></div>
-      <main class="mdl-layout__content">
-        <div v-show="loading" class="floating mdl-spinner mdl-js-spinner is-active"></div>
-        <div  class="page-content">
-          <!-- Your content goes here -->
-          <div v-show="!show_models" class="mdl-grid whiteboard" id="whiteboard">
-            <template v-for="w in windows">
-              <div :id="w.iframe_container" v-show="selected_window === w" class="plugin-iframe"></div>
-            </template>
-          </div>
-          <div v-if="show_models" class="mdl-grid">
-            <div class="mdl-cell--6-col mdl-cel" style="padding: 0 2rem">
-              <h5> # Models: {{getModelsCount()}}
-                <a id="add-model" href="https://github.com/bioimage-io/models#how-to-contribute-new-models" target="_blank"
-                  class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab">
-                  <i class="material-icons">add</i>
-                  <div class="mdl-tooltip" data-mdl-for="add-model">
-                    Add your model to the repository by sending us a Pull Request on Github.
-                  </div>
-                </a></h5>
-
-              <template id="label-selector" v-if="allLabels && allLabels.length>0">
-                <div class="labels-wrapper">
-                  <p v-if="filters.length">
-                    Selected {{filters.length}} filter(s)
-                    <a class="label" v-if="filters.length" style="background:  rgba(33,150,243,.26); "
-                      @click="clearAllFilters">
-                      <i class="material-icons delete">delete</i>
-                      Clear
-                    </a>
-                  </p>
-                  <a v-for="label in allLabels" class="label" @click="addRemoveToFilters(label)"
-                    v-bind:class="{ active: checkActive(label) }" v-if="getLabelCount(label) > 0">
-                    {{label}}
-                    <small class="label-count">{{getLabelCount(label)}}</small>
-                  </a>
-                </div>
-              </template>
-            </div>
-          </div>
-
-
-          <ul v-if="show_models" class="mdl-grid">
-            <li class="mdl-cell mdl-cell--4-col" v-for="(model, id) in filteredModels">
-              <div class="demo-card-wide mdl-card mdl-shadow--2dp">
-                <div class="background" :style="{backgroundImage: 'url(' + model.cover_image + ')'}">
-                  <div class="mdl-card__menu">
-                    <a :href="model.config_url" target="_blank" :id="id + 'repo'" v-if="model.config_url">
-                      <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
-                        <i class="material-icons">code</i>
-                      </button>
-                    </a>
-                    <div class="mdl-tooltip" :data-mdl-for="id + 'repo'">
-                      source code
-                    </div>
-                    
-                    <template v-for="app_key in model.applications">
-                      <a  :id="id + app_key" :key="id + app_key" v-if="apps[app_key]">
-                        <button @click="runOneModel(apps[app_key], model)" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
-                          <i class="material-icons" v-if="!apps[app_key].config.icon">extension</i>
-                          <img v-else-if="apps[app_key].config.icon.startsWith('http')" class="material-icons app-icons" :src="apps[app_key].config.icon" />
-                          <i class="material-icons" v-else>{{apps[app_key].config.icon}}</i>
-                        </button>
+        <div ref="progressbar" class="mdl-progress mdl-js-progress"></div>
+        <div class="mdl-tabs__panel is-active" id="starks-panel">
+          <main class="mdl-layout__content">
+            <div v-show="loading" class="floating mdl-spinner mdl-js-spinner is-active"></div>
+            <div  class="page-content">
+              <!-- Your content goes here -->
+              <div v-show="!show_models" class="mdl-grid whiteboard" id="whiteboard">
+                <template v-for="w in windows">
+                  <div :id="w.iframe_container" v-show="selected_window === w" class="plugin-iframe"></div>
+                </template>
+              </div>
+              <div v-if="show_models" class="mdl-grid">
+                <div class="mdl-cell--6-col mdl-cel" style="padding: 0 2rem">
+                  <h5> # Models: {{getModelsCount()}}
+                    <a id="add-model" href="https://github.com/bioimage-io/models#how-to-contribute-new-models" target="_blank"
+                      class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab">
+                      <i class="material-icons">add</i>
+                      <div class="mdl-tooltip" data-mdl-for="add-model">
+                        Add your model to the repository by sending us a Pull Request on Github.
+                      </div>
+                    </a></h5>
+    
+                  <template id="label-selector" v-if="allLabels && allLabels.length>0">
+                    <div class="labels-wrapper">
+                      <p v-if="filters.length">
+                        Selected {{filters.length}} filter(s)
+                        <a class="label" v-if="filters.length" style="background:  rgba(33,150,243,.26); "
+                          @click="clearAllFilters">
+                          <i class="material-icons delete">delete</i>
+                          Clear
+                        </a>
+                      </p>
+                      <a v-for="label in allLabels" class="label" @click="addRemoveToFilters(label)"
+                        v-bind:class="{ active: checkActive(label) }" v-if="getLabelCount(label) > 0">
+                        {{label}}
+                        <small class="label-count">{{getLabelCount(label)}}</small>
                       </a>
-                      <div class="mdl-tooltip"  :key="id + app_key + 'tooltip'" :data-mdl-for="id + app_key" v-if="apps[app_key]">
-                        model application: {{app_key}}
-                      </div>
-                    </template>
-
-                    <a :href="model.download_url" :id="id + 'www'" v-if="model.download_url">
-                      <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
-                        <i class="material-icons">vertical_align_bottom</i>
-                      </button>
-                    </a>
-                    <div class="mdl-tooltip" :data-mdl-for="id + 'www'">
-                      Download {{model.name}}
                     </div>
-
-                    <!-- <a @click="share(model)" :id="'share'+id">
-                      <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
-                        <i class="material-icons">share</i>
-                      </button>
-                    </a>
-                    <div class="mdl-tooltip" :data-mdl-for="'share'+id">
-                      Share {{model.name}}
-                    </div> -->
-                  </div>
+                  </template>
                 </div>
-                <div class="mdl-card__supporting-text">
-                  <span class="authors">
-                    {{ model.authors ? 'by ' + etAl(model.authors) : '' }}
-                  </span>
-                  <div class="mdl-grid">
-                    <div v-if="model.tags">
-                      <i class="material-icons" :id="id + 'labelTag'">label</i>
-                      <div class="mdl-tooltip" :data-mdl-for="id + 'labelTag'">
-                        Tags
+              </div>
+    
+    
+              <ul v-if="show_models" class="mdl-grid">
+                <li class="mdl-cell mdl-cell--4-col" v-for="(model, id) in filteredModels">
+                  <div class="demo-card-wide mdl-card mdl-shadow--2dp">
+                    <div class="background" :style="{backgroundImage: 'url(' + model.cover_image + ')'}">
+                      <div class="mdl-card__menu">
+                        <a :href="model.config_url" target="_blank" :id="id + 'repo'" v-if="model.config_url">
+                          <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
+                            <i class="material-icons">code</i>
+                          </button>
+                        </a>
+                        <div class="mdl-tooltip" :data-mdl-for="id + 'repo'">
+                          source code
+                        </div>
+                        
+                        <template v-for="app_key in model.applications">
+                          <a  :id="id + app_key" :key="id + app_key" v-if="apps[app_key]">
+                            <button @click="runOneModel(apps[app_key], model)" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
+                              <i class="material-icons" v-if="!apps[app_key].config.icon">extension</i>
+                              <img v-else-if="apps[app_key].config.icon.startsWith('http')" class="material-icons app-icons" :src="apps[app_key].config.icon" />
+                              <i class="material-icons" v-else>{{apps[app_key].config.icon}}</i>
+                            </button>
+                          </a>
+                          <div class="mdl-tooltip"  :key="id + app_key + 'tooltip'" :data-mdl-for="id + app_key" v-if="apps[app_key]">
+                            model application: {{app_key}}
+                          </div>
+                        </template>
+    
+                        <a :href="model.download_url" :id="id + 'www'" v-if="model.download_url">
+                          <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
+                            <i class="material-icons">vertical_align_bottom</i>
+                          </button>
+                        </a>
+                        <div class="mdl-tooltip" :data-mdl-for="id + 'www'">
+                          Download {{model.name}}
+                        </div>
+    
+                        <!-- <a @click="share(model)" :id="'share'+id">
+                          <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
+                            <i class="material-icons">share</i>
+                          </button>
+                        </a>
+                        <div class="mdl-tooltip" :data-mdl-for="'share'+id">
+                          Share {{model.name}}
+                        </div> -->
                       </div>
-                      <span v-for="tag in model.tags">
-                        <a class="label" @click="addRemoveToFilters(tag)"
-                          v-bind:class="{ active: checkActive(tag) }">{{ tag }}</a>
-                      </span>
                     </div>
-                    <div v-if="model.labels">
-                      <i class="material-icons" :id="id + 'label'">bookmark_border</i>
-                      <div class="mdl-tooltip" :data-mdl-for="id + 'labelIcon'">
-                        Labels
+                    <div class="mdl-card__supporting-text">
+                      <span class="authors">
+                        {{ model.authors ? 'by ' + etAl(model.authors) : '' }}
+                      </span>
+                      <div class="mdl-grid">
+                        <div v-if="model.tags">
+                          <i class="material-icons" :id="id + 'labelTag'">label</i>
+                          <div class="mdl-tooltip" :data-mdl-for="id + 'labelTag'">
+                            Tags
+                          </div>
+                          <span v-for="tag in model.tags">
+                            <a class="label" @click="addRemoveToFilters(tag)"
+                              v-bind:class="{ active: checkActive(tag) }">{{ tag }}</a>
+                          </span>
+                        </div>
+                        <div v-if="model.labels">
+                          <i class="material-icons" :id="id + 'label'">bookmark_border</i>
+                          <div class="mdl-tooltip" :data-mdl-for="id + 'labelIcon'">
+                            Labels
+                          </div>
+                          <span v-for="label in model.labels">
+                            <a class="label" @click="addRemoveToFilters(label)"
+                              v-bind:class="{ active: checkActive(label) }">{{ label }}</a>
+                          </span>
+                        </div>
+                        <div v-if="model.license">
+                          <i class="material-icons" :id="id + 'labelLicense'">copyright</i>
+                          <div class="mdl-tooltip" :data-mdl-for="id + 'labelLicense'">
+                            License
+                          </div>
+                          <span>
+                            <a class="label" @click="addRemoveToFilters(model.license)"
+                              v-bind:class="{ active: checkActive(model.license) }">{{ model.license }}</a>
+                          </span>
+                        </div>
+                        
                       </div>
-                      <span v-for="label in model.labels">
-                        <a class="label" @click="addRemoveToFilters(label)"
-                          v-bind:class="{ active: checkActive(label) }">{{ label }}</a>
-                      </span>
                     </div>
-                    <div v-if="model.license">
-                      <i class="material-icons" :id="id + 'labelLicense'">copyright</i>
-                      <div class="mdl-tooltip" :data-mdl-for="id + 'labelLicense'">
-                        License
-                      </div>
-                      <span>
-                        <a class="label" @click="addRemoveToFilters(model.license)"
-                          v-bind:class="{ active: checkActive(model.license) }">{{ model.license }}</a>
-                      </span>
+                    <div class="mdl-card__actions mdl-card--border mdl-card--bottom">
+                      <h3 class="mdl-card__title-text">
+                        <a @click="showInfo(model)" style="color: #ffffff">
+                          <i v-if="model.icon" class="material-icons">{{model.icon}}</i>
+                          <i v-else class="material-icons">extension</i>
+                          {{model.name.slice(0,30)}}
+                        </a>
+                      </h3>
+                      <span v-if="model.description"> {{ model.description.slice(0, 100) }}</span><br>
+                      <!-- <span class="mdl-chip__text">{{model.repo}}</span></div> -->
+    
                     </div>
-                    
-                  </div>
-                </div>
-                <div class="mdl-card__actions mdl-card--border mdl-card--bottom">
-                  <h3 class="mdl-card__title-text">
-                    <a @click="showInfo(model)" style="color: #ffffff">
-                      <i v-if="model.icon" class="material-icons">{{model.icon}}</i>
-                      <i v-else class="material-icons">extension</i>
-                      {{model.name.slice(0,30)}}
-                    </a>
-                  </h3>
-                  <span v-if="model.description"> {{ model.description.slice(0, 100) }}</span><br>
-                  <!-- <span class="mdl-chip__text">{{model.repo}}</span></div> -->
-
-                </div>
-            </li>
-          </ul>
-
-          <footer v-if="show_models" class="mdl-mini-footer">
-            <div class="mdl-mini-footer__left-section">
-              <ul class="mdl-mini-footer__link-list">
-                <li>Adapted from <a href="https://p.migdal.pl/interactive-machine-learning-list/" target="_blank">interactive-machine-learning-list</a> by Migdał et. al.</li>
-                <li><a href="https://github.com/bioimage-io/models" target="_blank">
-                  <img src="/assets/github.svg" style="width: 20px; height:20px;margin-right:3px;"></img>Model
-                  Repository</a>
                 </li>
               </ul>
+    
+              <footer v-if="show_models" class="mdl-mini-footer">
+                <div class="mdl-mini-footer__left-section">
+                  <ul class="mdl-mini-footer__link-list">
+                    <li>Adapted from <a href="https://p.migdal.pl/interactive-machine-learning-list/" target="_blank">interactive-machine-learning-list</a> by Migdał et. al.</li>
+                    <li><a href="https://github.com/bioimage-io/models" target="_blank">
+                      <img src="/assets/github.svg" style="width: 20px; height:20px;margin-right:3px;"></img>Model
+                      Repository</a>
+                    </li>
+                  </ul>
+                </div>
+              </footer>
             </div>
-          </footer>
+          </main>
         </div>
-      </main>
-
+      </div>
     </div>
     <dialog class="mdl-dialog" ref="window_dialog">
       <div class="mdl-dialog__title" v-if="dialog_window">
@@ -241,7 +236,7 @@
         <i v-else class="material-icons">extension</i>
         {{dialog_window.name}}
         <div style="top: 0px; position: absolute; right:0px;">
-          <button type="button" class="mdl-button close" @click="closeDialog()"><i class="material-icons">clear</i></button>
+          <button type="button" class="mdl-button close" @click="closeDialog()"><i class="material-icons" style="color:white;">clear</i></button>
         </div>
       </div>
       
